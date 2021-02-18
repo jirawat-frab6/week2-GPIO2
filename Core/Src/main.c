@@ -43,7 +43,10 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+
 uint16_t button_matrix_state = 0;
+uint32_t button_matrix_timestamp = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,6 +99,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  button_matrix_update();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -256,8 +260,32 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+uint8_t button_matrix_row = 0;
+GPIO_TypeDef *button_matrix_port[8] = { GPIOA , GPIOB , GPIOB , GPIOB , GPIOA , GPIOC , GPIOB , GPIOA };
+uint16_t button_matrix_pin[8] = {GPIO_PIN_10,GPIO_PIN_3,GPIO_PIN_5,GPIO_PIN_4,GPIO_PIN_9,GPIO_PIN_7,GPIO_PIN_6,GPIO_PIN_7};
 void button_matrix_update(){
+	if(HAL_GetTick() - button_matrix_timestamp >= 100){
+		button_matrix_timestamp = HAL_GetTick();
+		for(int i=0; i<4 ; i++){
+			GPIO_PinState pin_state = HAL_GPIO_ReadPin(button_matrix_port[i], button_matrix_pin[i]);
+			if(pin_state == GPIO_PIN_RESET){
+				button_matrix_state |= (0b1 << (i + button_matrix_row*4));
+			}
+			else{
+				button_matrix_state &= ~(0b1 << (i + button_matrix_row*4));
+			}
+		}
+		//set
+		uint8_t now_output_pin = button_matrix_row+4;
+		HAL_GPIO_WritePin(button_matrix_port[now_output_pin], button_matrix_pin[now_output_pin], 1);
 
+		//update matrix row
+		button_matrix_row = (button_matrix_row+1)%4;
+
+		//reset
+		uint8_t next_output_pin = button_matrix_row+4;
+		HAL_GPIO_WritePin(button_matrix_port[next_output_pin], button_matrix_pin[next_output_pin], 0);
+	}
 }
 /* USER CODE END 4 */
 
