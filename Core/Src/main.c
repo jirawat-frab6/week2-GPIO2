@@ -315,7 +315,7 @@ void convert_button_to_input_data(){
 		case 0b1<<4: input_char = '4';break;
 		case 0b1<<5: input_char = '5';break;
 		case 0b1<<6: input_char = '6';break;
-		case 0b1<<7: input_data[input_data_ind-1] = '\0';return;break;
+		case 0b1<<7: if(input_data_ind){input_data[--input_data_ind] = '\0';button_clk[1] = button_clk[0];};return;break;
 
 		case 0b1<<8: input_char = '1';break;
 		case 0b1<<9: input_char = '2';break;
@@ -327,8 +327,9 @@ void convert_button_to_input_data(){
 		case 0b1<<14: return;break;
 		case 0b1<<15: ch_led = 1;return;break;
 		}
-		input_data[input_data_ind++] = input_char;
-		input_data_ind %= 11;
+		if(input_data_ind < 11){
+			input_data[input_data_ind++] = input_char;
+		}
 	}
 	button_clk[1] = button_clk[0];
 }
