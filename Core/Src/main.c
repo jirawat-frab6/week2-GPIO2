@@ -111,6 +111,7 @@ int main(void)
 		  }else{
 			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, 0);
 		  }
+		  ch_led = 0;
 	  }
     /* USER CODE END WHILE */
 
@@ -276,7 +277,7 @@ uint8_t button_matrix_row = 0;
 GPIO_TypeDef *button_matrix_port[8] = { GPIOA , GPIOB , GPIOB , GPIOB , GPIOA , GPIOC , GPIOB , GPIOA };
 uint16_t button_matrix_pin[8] = {GPIO_PIN_10,GPIO_PIN_3,GPIO_PIN_5,GPIO_PIN_4,GPIO_PIN_9,GPIO_PIN_7,GPIO_PIN_6,GPIO_PIN_7};
 void button_matrix_update(){
-	if(HAL_GetTick() - button_matrix_timestamp >= 100){
+	if(HAL_GetTick() - button_matrix_timestamp >= 50){
 		button_matrix_timestamp = HAL_GetTick();
 		for(int i=0; i<4 ; i++){
 			GPIO_PinState pin_state = HAL_GPIO_ReadPin(button_matrix_port[i], button_matrix_pin[i]);
@@ -305,31 +306,31 @@ char input_char = 'X',input_data[15];
 void convert_button_to_input_data(){
 	button_clk[0] = button_matrix_state;
 	if(button_clk[1] == 0 && button_clk[0]!=0){
-		switch (button_matrix_state) {
+		switch (button_clk[0]) {
 		case 0b1<<0: input_char = '7';break;
 		case 0b1<<1: input_char = '8';break;
 		case 0b1<<2: input_char = '9';break;
-		case 0b1<<3: input_data[0]='\0';break;
+		case 0b1<<3: input_data[0]='\0';input_data_ind = 0;return;break;
 
 		case 0b1<<4: input_char = '4';break;
 		case 0b1<<5: input_char = '5';break;
 		case 0b1<<6: input_char = '6';break;
-		case 0b1<<7: input_char = 'B';break;
+		case 0b1<<7: input_data[input_data_ind-1] = '\0';return;break;
 
 		case 0b1<<8: input_char = '1';break;
 		case 0b1<<9: input_char = '2';break;
 		case 0b1<<10: input_char = '3';break;
-		case 0b1<<11: break;
+		case 0b1<<11: return;break;
 
 		case 0b1<<12: input_char = '0';break;
-		case 0b1<<13: break;
-		case 0b1<<14: break;
-		case 0b1<<15: ch_led = 1;break;
+		case 0b1<<13: return;break;
+		case 0b1<<14: return;break;
+		case 0b1<<15: ch_led = 1;return;break;
 		}
 		input_data[input_data_ind++] = input_char;
 		input_data_ind %= 11;
-		button_clk[1] = button_clk[0];
 	}
+	button_clk[1] = button_clk[0];
 }
 
 int check_password(){
